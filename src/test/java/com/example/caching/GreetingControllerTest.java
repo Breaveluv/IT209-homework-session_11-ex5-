@@ -20,7 +20,7 @@ class GreetingControllerTest {
     void testGreetingEndpoint() throws Exception {
         mockMvc.perform(get("/api/greeting"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.status").value("FAIL_ON_PURPOSE_TO_TEST_SKIPPED"))
                 .andExpect(jsonPath("$.session").value("Session 11 - Exercise 3"));
     }
 }
