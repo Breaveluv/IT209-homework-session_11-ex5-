@@ -1,13 +1,5 @@
 # Báo Cáo Kỹ Thuật Bài 5: Tách Luồng & Nối Job Tự Động Build & Push Docker Image Với Ràng Buộc Phụ Thuộc (Job Dependencies)
 
-## 1. Thông Tin Chung
-- **Học phần**: Thực hành CI/CD & Tự động hóa kiểm thử (IT209)
-- **Bài thực hành**: Session 11 - Bài 5: Nối Job tự động Build & Push Docker Image sau khi Test Gradle xanh
-- **Học viên**: Nguyễn Việt Nam
-- **Kho lưu trữ GitHub**: [Breaveluv/IT209-homework-session_11-ex5-](https://github.com/Breaveluv/IT209-homework-session_11-ex5-)
-- **Đường dẫn nộp bài**: `homework/session_11/ex5/`
-
----
 
 ## 2. Bối Cảnh & Vấn Đề Kỹ Thuật
 
@@ -115,12 +107,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.REGISTRY_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Chuẩn hóa tên Docker Image thành chữ thường
-        run: |
-          echo "IMAGE_NAME=ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
-
       - name: Thiết lập Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Chuẩn hóa metadata và tên Image cho GHCR
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
 
       - name: Đóng gói Dockerfile và Push lên GHCR
         uses: docker/build-push-action@v5
@@ -128,9 +125,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 ```
 
 ---

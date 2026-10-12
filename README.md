@@ -1,11 +1,5 @@
 # Báo Cáo & Hướng Dẫn Bài 5: Tự Động Hóa CI/CD - Nối Job Build & Push Docker Image Sau Khi Test Gradle Xanh
 
-## 1. Thông Tin Chung
-- **Môn học**: Thực hành DevOps / CI-CD (IT209)
-- **Bài thực hành**: Session 11 - Bài 5: Nối Job tự động Build & Push Docker Image sau khi Test Gradle xanh
-- **Học viên**: Nguyễn Việt Nam
-- **Đường dẫn bài nộp**: `homework/session_11/ex5/`
-- **Kho lưu trữ GitHub**: [Breaveluv/IT209-homework-session_11-ex5-](https://github.com/Breaveluv/IT209-homework-session_11-ex5-)
 
 ---
 
@@ -136,12 +130,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.REGISTRY_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Chuẩn hóa tên Docker Image thành chữ thường
-        run: |
-          echo "IMAGE_NAME=ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
-
       - name: Thiết lập Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Chuẩn hóa metadata và tên Image cho GHCR
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
 
       - name: Đóng gói Dockerfile và Push lên GHCR
         uses: docker/build-push-action@v5
@@ -149,9 +148,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 ```
 
 ---
